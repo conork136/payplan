@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayPlan</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+body{font-family:Inter,system-ui;background:linear-gradient(180deg,#eef4fb 0%,#f6f8fc 100%);margin:0;-webkit-font-smoothing:antialiased;color:#172033}
+.app{max-width:1140px;margin:auto;padding:22px 18px 180px}
+.header{background:linear-gradient(135deg,#3f87e0 0%,#5aa0f2 55%,#79b8ff 100%);color:white;padding:24px;border-radius:28px;margin-bottom:20px;box-shadow:0 28px 60px rgba(36,77,138,.22);position:relative;overflow:hidden}
+.header::after{content:'';position:absolute;right:-60px;top:-60px;width:220px;height:220px;background:rgba(255,255,255,.10);border-radius:50%}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;position:relative;z-index:1}
+.brand-wrap{display:flex;align-items:center;gap:14px}
+.logo-badge{width:48px;height:48px;border-radius:15px;background:white;color:#3f87e0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:21px;flex:0 0 auto;box-shadow:0 12px 30px rgba(0,0,0,.12)}
+.brand-kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-bottom:4px;font-weight:700}
+.brand-title{font-size:28px;font-weight:800;line-height:1.1}
+.brand-subtitle{opacity:.92;margin-top:5px}
+.header-chip{align-self:flex-start;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.18);padding:10px 14px;border-radius:999px;font-size:13px;font-weight:700;backdrop-filter:blur(4px)}
+.hero-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px;position:relative;z-index:1}
+.hero-stat{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:16px 18px;backdrop-filter:blur(6px)}
+.hero-label{font-size:12px;letter-spacing:.04em;text-transform:uppercase;opacity:.82;font-weight:700;margin-bottom:7px}
+.hero-value{font-size:26px;font-weight:800;line-height:1.05}
+.hero-note{font-size:13px;opacity:.92;margin-top:6px}
+.section-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 0 14px}
+.section-title{font-size:20px;font-weight:800;color:#182338}
+.section-copy{font-size:13px;color:#60708f}
+.grid-home,.grid-plan{display:grid;grid-template-columns:1fr 1fr;gap:22px;grid-auto-rows:minmax(220px,auto);padding-bottom:24px}
+.card{background:white;border-radius:24px;padding:20px;box-shadow:0 16px 38px rgba(12,36,78,.08);min-height:220px;display:flex;flex-direction:column;justify-content:flex-start;position:relative;overflow:hidden;border:1px solid rgba(224,231,242,.9)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:#e6edf7}
+.card.strip-blue::before{background:#4a90e2}
+.card.strip-green::before{background:#1f8a4c}
+.card.strip-red::before{background:#d64545}
+.card.strip-purple::before{background:#7c5cff}
+.card.clickable{cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
+.card.clickable:hover{transform:translateY(-3px);box-shadow:0 20px 42px rgba(12,36,78,.12)}
+.card-title{font-weight:800;margin-bottom:10px;font-size:18px;color:#182338}
+.card-subtitle{font-size:13px;color:#667792;margin-bottom:16px;line-height:1.45}
+.card-footnote{margin-top:auto;font-size:12px;color:#72829d}
+.big{font-size:34px;font-weight:800;line-height:1.08;letter-spacing:-.02em}
+.stat{font-size:13px;color:#61708a;margin-top:7px;line-height:1.45}
+.status-pill{display:inline-block;padding:7px 12px;border-radius:999px;font-weight:700;font-size:12px;margin-top:12px}
+.safe{background:#e6f6ec;color:#1f8a4c}
+.risk{background:#ffeaea;color:#d64545}
+.bottom-nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.96);padding:12px 16px;border-radius:24px;display:flex;gap:10px;box-shadow:0 24px 55px rgba(10,24,54,.22);z-index:20;border:1px solid rgba(223,229,238,.95);backdrop-filter:blur(8px);max-width:calc(100% - 24px)}
+.nav-btn{background:none;border:none;font-weight:700;color:#7a879d;font-size:14px;cursor:pointer;padding:10px 16px;border-radius:14px}
+.nav-btn.active{color:#2f6fbe;background:#edf4ff}
+.screen{display:none}
+.screen.active{display:block;animation:fade .2s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+input,select,textarea{width:100%;padding:13px 14px;border-radius:14px;border:1px solid #dde5f0;margin-bottom:12px;box-sizing:border-box;font:inherit;background:#fff;color:#172033}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#7aaeff;box-shadow:0 0 0 4px rgba(74,144,226,.12)}
+button.primary{background:#4a90e2;color:white;border:none;padding:14px;border-radius:14px;font-weight:800;width:100%;cursor:pointer;box-shadow:0 10px 24px rgba(74,144,226,.22)}
+button.delete-btn{background:#ffdede;color:#b42318;border:none;border-radius:10px;padding:7px 10px;cursor:pointer;font-weight:700}
+button.secondary{background:#eef3f9;color:#2b5fa8;border:none;padding:10px 12px;border-radius:12px;font-weight:700;cursor:pointer}
+.plan-item,.txn-card,.suggestion-item{background:#f7f9fc;border-radius:16px;padding:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid #e7edf6}
+.hint{font-size:12px;color:#667792;line-height:1.45}
+.file-input{padding:10px;background:#f7f9fc;border:1px dashed #c7d3e3;border-radius:14px;margin:12px 0 8px}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.badge.income{background:#e8f7ee;color:#1f8a4c}
+.badge.outgoing{background:#ffeaea;color:#d64545}
+.mini-list{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+.mini-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:10px 12px;background:#f8fafe;border-radius:12px;border:1px solid #e8eef7}
+.modal{position:fixed;inset:0;background:rgba(11,19,35,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:40;backdrop-filter:blur(2px)}
+.modal.show{display:flex}
+.modal-inner{background:white;border-radius:24px;max-width:880px;width:100%;max-height:88vh;overflow:auto;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.24)}
+.insight{background:#f8fafe;border:1px solid #e7eef8;border-radius:18px;padding:16px;margin-bottom:14px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar button{border:none;background:#eef3f9;padding:9px 12px;border-radius:999px;font-weight:700;color:#577098;cursor:pointer}
+.toolbar button.active{background:#4a90e2;color:white}
+canvas{max-width:100%;pointer-events:none}
+#balanceChart{height:185px !important}
+.quick-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.metric-card{background:white;border-radius:18px;padding:16px 18px;box-shadow:0 12px 30px rgba(12,36,78,.06);border:1px solid #e8edf6}
+.metric-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#70809c;font-weight:700;margin-bottom:8px}
+.metric-value{font-size:26px;font-weight:800;color:#182338}
+.metric-note{font-size:13px;color:#677892;margin-top:6px}
+@media (max-width:900px){
+  .hero-stats,.quick-metrics{grid-template-columns:1fr}
+  .grid-home,.grid-plan{grid-template-columns:1fr}
+  .header-top{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:640px){
+  .app{padding:16px 14px 190px}
+  .header{padding:20px;border-radius:24px}
+  .brand-title{font-size:24px}
+  .big{font-size:29px}
+  .card{padding:18px;min-height:unset}
+  .bottom-nav{width:calc(100% - 24px);justify-content:space-between;gap:0}
+  .nav-btn{flex:1;padding:12px 10px}
+  .modal-inner{padding:18px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="brand-wrap">
+        <div class="logo-badge">P</div>
+        <div>
+          <div class="brand-kicker">Irish cash-flow planner</div>
+          <div class="brand-title">PayPlan</div>
+          <div class="brand-subtitle">Plan around payday and see trouble coming before it hits.</div>
+        </div>
+      </div>
+      <div class="header-chip">Demo preview</div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-label">Current balance</div>
+        <div id="heroCurrentBalance" class="hero-value">€0</div>
+        <div id="heroBalanceNote" class="hero-note">Add your starting balance in Settings</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-label">Monthly cushion</div>
+        <div id="heroMonthlyCushion" class="hero-value">€0</div>
+        <div id="heroMonthlyCushionNote" class="hero-note">Income minus outgoings</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-label">Lowest forecast point</div>
+        <div id="heroLowestPoint" class="hero-value">€0</div>
+        <div id="heroLowestPointNote" class="hero-note">Based on the next 60 days</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="home" class="screen active">
+    <div class="section-heading"><div><div class="section-title">Dashboard</div><div class="section-copy">A quick view of your cash flow over the next 60 days.</div></div></div>
+    <div class="quick-metrics">
+      <div class="metric-card"><div class="metric-label">Monthly income</div><div id="metricIncome" class="metric-value">€0</div><div id="metricIncomeNote" class="metric-note">0 income items</div></div>
+      <div class="metric-card"><div class="metric-label">Monthly outgoings</div><div id="metricOutgoing" class="metric-value">€0</div><div id="metricOutgoingNote" class="metric-note">0 outgoing items</div></div>
+      <div class="metric-card"><div class="metric-label">Upcoming items</div><div id="metricUpcoming" class="metric-value">0</div><div id="metricUpcomingNote" class="metric-note">Due in the next 7 days</div></div>
+    </div>
+    <div class="grid-home">
+      <div class="card clickable strip-blue" onclick="openHomeModal('today')">
+        <div class="card-title">Today Status</div>
+        <div id="todayStatus" class="big">—</div>
+        <div id="todayBalanceLine" class="stat"></div>
+        <div id="daysToPay" class="stat"></div>
+        <div id="nextBill" class="stat"></div>
+      </div>
+
+      <div class="card clickable strip-red" onclick="openHomeModal('forecast')">
+        <div class="card-title">Forecast Balance</div>
+        <div id="lowestBalance" class="big">€0.00</div>
+        <div id="statusPill"></div>
+        <div id="forecastMeta" class="stat"></div>
+      </div>
+
+      <div class="card clickable strip-green" onclick="openHomeModal('graph')">
+        <div class="card-title">Balance Graph</div>
+        <canvas id="balanceChart"></canvas>
+      </div>
+
+      <div class="card clickable strip-purple" onclick="openHomeModal('upcoming')">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div class="card-title" style="margin:0">Upcoming</div>
+          <div class="hint">Next 7 days</div>
+        </div>
+        <div id="upcomingPreview"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="plan" class="screen">
+    <div class="section-heading"><div><div class="section-title">Plan</div><div class="section-copy">Build your monthly money plan manually or from imported transactions.</div></div></div>
+    <div class="quick-metrics">
+      <div class="metric-card"><div class="metric-label">Saved income</div><div id="planIncomeTotal" class="metric-value">€0</div><div id="planIncomeCount" class="metric-note">No income items yet</div></div>
+      <div class="metric-card"><div class="metric-label">Saved outgoings</div><div id="planOutgoingTotal" class="metric-value">€0</div><div id="planOutgoingCount" class="metric-note">No outgoing items yet</div></div>
+      <div class="metric-card"><div class="metric-label">Import review</div><div id="planImportCount" class="metric-value">0</div><div id="planImportNote" class="metric-note">No document scanned yet</div></div>
+    </div>
+    <div class="grid-plan">
+      <div class="card clickable strip-blue" onclick="openPlanModal('manual')">
+        <div class="card-title">Manual Input</div>
+        <div class="card-subtitle">Quickly add salary, mortgage, subscriptions, savings goals, and regular bills.</div>
+        <div class="mini-row"><span>Add items</span><span>Fast setup</span></div>
+        <div class="mini-row"><span>Edit later</span><span>Flexible</span></div>
+        <div class="card-footnote">Best for building your starting plan in a few minutes.</div>
+      </div>
+
+      <div class="card clickable strip-purple" onclick="openPlanModal('upload')">
+        <div class="card-title">Upload Statement</div>
+        <div class="card-subtitle">Import PDF, CSV, or pasted transactions to detect recurring income and bills.</div>
+        <div id="uploadSummary" class="stat"></div>
+        <div class="card-footnote">Everything is processed in the browser in this demo.</div>
+      </div>
+
+      <div class="card clickable strip-green" onclick="openPlanModal('income')">
+        <div class="card-title">Income</div>
+        <div id="incomeSummary" class="card-subtitle"></div>
+        <div id="incomePreview" class="mini-list"></div>
+        <div class="card-footnote">Tap to review all saved income items.</div>
+      </div>
+
+      <div class="card clickable strip-red" onclick="openPlanModal('outgoing')">
+        <div class="card-title">Outgoings</div>
+        <div id="outgoingSummary" class="card-subtitle"></div>
+        <div id="outgoingPreview" class="mini-list"></div>
+        <div class="card-footnote">Tap to review all bills and regular spending.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings" class="screen">
+    <div class="section-heading"><div><div class="section-title">Settings</div><div class="section-copy">Start with your current balance so the forecast feels real.</div></div></div>
+    <div class="card strip-blue">
+      <div style="font-weight:800;margin-bottom:10px;font-size:18px">Starting balance</div>
+      <div class="hint" style="margin-bottom:12px">Enter the amount currently in your bank account. This feeds the dashboard and forecast.</div>
+      <input id="startBal" type="number" placeholder="Enter current bank balance">
+      <button class="primary" onclick="updateStart()">Save balance</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn active" onclick="switchTab('home',this)">Home</button>
+  <button class="nav-btn" onclick="switchTab('plan',this)">Plan</button>
+  <button class="nav-btn" onclick="switchTab('settings',this)">Settings</button>
+</div>
+
+<div class="modal" id="editModal">
+  <div class="modal-inner" style="max-width:420px">
+    <h3 style="margin-top:0">Edit item</h3>
+    <input id="editName">
+    <select id="editType"><option>Outgoing</option><option>Income</option></select>
+    <input id="editAmount" type="number">
+    <select id="editFreq"><option>Monthly</option><option>Fortnightly</option><option>Weekly</option></select>
+    <input id="editDate" type="date">
+    <button class="primary" onclick="saveEdit()">Save</button>
+    <button class="primary" style="background:#ff6b6b;margin-top:6px" onclick="deleteEdit()">Delete</button>
+  </div>
+</div>
+
+<div class="modal" id="homeModal">
+  <div class="modal-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div id="homeModalTitle" style="font-weight:700;font-size:20px">Details</div>
+      <button class="delete-btn" onclick="closeHomeModal()">Close</button>
+    </div>
+    <div id="homeModalContent" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<div class="modal" id="planModal">
+  <div class="modal-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div id="planModalTitle" style="font-weight:700;font-size:20px">Plan</div>
+      <button class="delete-btn" onclick="closePlanModal()">Close</button>
+    </div>
+    <div id="planModalContent" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<script>
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+}
+
+let items = JSON.parse(localStorage.getItem('pp_items') || '[]')
+let startBalance = Number(localStorage.getItem('pp_start') || 0)
+let editingIndex = null
+let chart = null
+let modalChart = null
+let upcomingForecastItems = []
+let upcomingRange = 30
+let recurringSuggestions = []
+let detectedTransactions = []
+let archivedTransactions = []
+let homeSnapshot = { todayBal:0, lowest:0, nextPay:null, nextBill:null, upcoming:[], survivalEvents:0, labels:[], data:[], future:[] }
+
+function save(){
+  localStorage.setItem('pp_items', JSON.stringify(items))
+  localStorage.setItem('pp_start', String(startBalance))
+}
+
+function switchTab(id, btn){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
+  if(btn) btn.classList.add('active')
+}
+
+function updateStart(){
+  startBalance = Number(document.getElementById('startBal').value || 0)
+  save()
+  renderHomeDashboard()
+}
+
+function formatDateDisplay(date){
+  return date.toLocaleDateString('en-IE', { day:'2-digit', month:'2-digit', year:'numeric' })
+}
+
+function formatAmount(amount, type){
+  return `${type === 'Income' ? '+' : '-'}€${Math.abs(amount).toFixed(2)}`
+}
+
+function monthlyValue(item){
+  if(item.freq === 'Monthly') return item.amount
+  if(item.freq === 'Fortnightly') return item.amount * 2.166
+  if(item.freq === 'Weekly') return item.amount * 4.333
+  return item.amount
+}
+
+function addItemFromModal(){
+  const n = document.getElementById('modalName').value.trim()
+  const t = document.getElementById('modalType').value
+  const a = Number(document.getElementById('modalAmount').value || 0)
+  const f = document.getElementById('modalFreq').value
+  const d = document.getElementById('modalDate').value
+  if(!n || !a || !d) return
+  items.push({ name:n, type:t, amount:a, freq:f, date:d })
+  save()
+  closePlanModal()
+  renderHomeDashboard()
+  renderPlanDashboard()
+}
+
+function openEdit(index){
+  editingIndex = index
+  const item = items[index]
+  document.getElementById('editName').value = item.name
+  document.getElementById('editType').value = item.type
+  document.getElementById('editAmount').value = item.amount
+  document.getElementById('editFreq').value = item.freq
+  document.getElementById('editDate').value = item.date
+  document.getElementById('editModal').classList.add('open')
+}
+
+function saveEdit(){
+  if(editingIndex === null) return
+  items[editingIndex] = {
+    name: document.getElementById('editName').value.trim(),
+    type: document.getElementById('editType').value,
+    amount: Number(document.getElementById('editAmount').value || 0),
+    freq: document.getElementById('editFreq').value,
+    date: document.getElementById('editDate').value
+  }
+  save()
+  document.getElementById('editModal').classList.remove('open')
+  renderHomeDashboard()
+  renderPlanDashboard()
+}
+
+function deleteEdit(){
+  if(editingIndex === null) return
+  items.splice(editingIndex, 1)
+  save()
+  document.getElementById('editModal').classList.remove('open')
+  renderHomeDashboard()
+  renderPlanDashboard()
+}
+
+function buildForecast(){
+  let bal = startBalance
+  let todayBal = startBalance
+  let lowest = startBalance
+  let survivalEvents = 0
+  let nextPay = null
+  let nextBill = null
+  const labels = []
+  const data = []
+  const future = []
+  const upcoming = []
+  const now = new Date()
+  const horizon = new Date()
+  horizon.setDate(horizon.getDate() + 60)
+
+  items.forEach(item => {
+    let d = new Date(item.date + 'T00:00:00')
+    let safety = 0
+    while(d <= horizon){
+      future.push({ ...item, date: new Date(d) })
+      if(item.freq === 'Monthly') d.setMonth(d.getMonth() + 1)
+      else if(item.freq === 'Fortnightly') d.setDate(d.getDate() + 14)
+      else if(item.freq === 'Weekly') d.setDate(d.getDate() + 7)
+      else break
+      safety++
+      if(safety > 80) break
+    }
+  })
+
+  future.sort((a,b) => a.date - b.date)
+  upcomingForecastItems = future.filter(f => (f.date - now) >= 0)
+
+  future.forEach(f => {
+    if(f.date <= now) todayBal += f.type === 'Income' ? f.amount : -f.amount
+    bal += f.type === 'Income' ? f.amount : -f.amount
+    const diffDays = (f.date - now) / 86400000
+    if(diffDays <= 60){
+      labels.push(f.date.toLocaleDateString('en-IE', { day:'numeric', month:'short' }))
+      data.push(bal)
+    }
+    if(bal < lowest) lowest = bal
+    if(bal >= 0) survivalEvents++
+    if(!nextPay && f.type === 'Income' && f.date > now) nextPay = f
+    if(!nextBill && f.type === 'Outgoing' && f.date > now) nextBill = f
+    if(diffDays >= 0 && diffDays <= 7) upcoming.push(f)
+  })
+
+  homeSnapshot = { todayBal, lowest, nextPay, nextBill, upcoming, survivalEvents, labels, data, future }
+}
+
+function drawBalanceChart(canvasId){
+  const canvas = document.getElementById(canvasId)
+  if(!canvas) return null
+  const ctx = canvas.getContext('2d')
+  const gradient = ctx.createLinearGradient(0,0,0,220)
+  gradient.addColorStop(0,'rgba(74,144,226,0.25)')
+  gradient.addColorStop(1,'rgba(74,144,226,0.02)')
+
+  const todayIndex = 0
+
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: homeSnapshot.labels,
+      datasets: [{
+        data: homeSnapshot.data,
+        borderWidth: 3,
+        tension: .35,
+        pointRadius: 0,
+        fill: true,
+        backgroundColor: gradient,
+        borderColor: '#4a90e2'
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => '€' + ctx.parsed.y.toFixed(2)
+          }
+        }
+      },
+      scales: {
+        x: {
+          display: true,
+          ticks: { maxTicksLimit: 6, color: '#666' },
+          grid: { display:false }
+        },
+        y: {
+          display: true,
+          ticks: {
+            color: '#666',
+            callback: val => '€' + Number(val).toFixed(0)
+          },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        }
+      }
+    },
+    plugins: [{
+      id: 'todayLine',
+      afterDraw(chartInstance){
+        const xAxis = chartInstance.scales.x
+        if(!xAxis || !homeSnapshot.labels.length) return
+        const x = xAxis.getPixelForValue(todayIndex)
+        const c = chartInstance.ctx
+        c.save()
+        c.beginPath()
+        c.moveTo(x, chartInstance.chartArea.top)
+        c.lineTo(x, chartInstance.chartArea.bottom)
+        c.lineWidth = 2
+        c.strokeStyle = '#ff6b6b'
+        c.setLineDash([6,4])
+        c.stroke()
+        c.restore()
+      }
+    }]
+  })
+}
+
+function renderHomeDashboard(){
+  if(chart) chart.destroy()
+  buildForecast()
+  const now = new Date()
+  const incomes = items.filter(x => x.type === 'Income')
+  const outgoings = items.filter(x => x.type === 'Outgoing')
+  const incomeTotal = incomes.reduce((t,x) => t + monthlyValue(x), 0)
+  const outgoingTotal = outgoings.reduce((t,x) => t + monthlyValue(x), 0)
+  const monthlyCushion = incomeTotal - outgoingTotal
+
+  document.getElementById('todayStatus').innerText = homeSnapshot.todayBal >= 0 ? 'On track 👍' : 'Getting tight ⚠️'
+  document.getElementById('todayBalanceLine').innerText = `Today balance €${homeSnapshot.todayBal.toFixed(2)}`
+  document.getElementById('daysToPay').innerText = homeSnapshot.nextPay ? `${Math.ceil((homeSnapshot.nextPay.date - now)/86400000)} days until ${homeSnapshot.nextPay.name}` : 'No income ahead yet'
+  document.getElementById('nextBill').innerText = homeSnapshot.nextBill ? `Next bill ${homeSnapshot.nextBill.name} (${formatDateDisplay(homeSnapshot.nextBill.date)})` : 'No outgoing ahead yet'
+  document.getElementById('lowestBalance').innerText = `€${homeSnapshot.lowest.toFixed(2)}`
+  document.getElementById('forecastMeta').innerText = homeSnapshot.survivalEvents ? `Forecast stays positive for ${homeSnapshot.survivalEvents} events` : 'May go negative'
+  document.getElementById('statusPill').innerHTML = homeSnapshot.lowest < 0 ? `<span class="status-pill risk">Risk</span>` : `<span class="status-pill safe">Safe</span>`
+
+  const preview = homeSnapshot.upcoming.slice(0,3)
+  document.getElementById('upcomingPreview').innerHTML = preview.length
+    ? preview.map(f => `<div class="txn-card"><div><div style="font-weight:700">${f.name}</div><div class="hint">${formatDateDisplay(f.date)}</div></div><div style="font-weight:800;color:${f.type === 'Income' ? '#1f8a4c' : '#d64545'}">${formatAmount(f.amount, f.type)}</div></div>`).join('')
+    : '<div class="hint">Nothing due in the next 7 days</div>'
+
+  document.getElementById('heroCurrentBalance').textContent = `€${Number(startBal || 0).toFixed(0)}`
+  document.getElementById('heroBalanceNote').textContent = homeSnapshot.nextPay ? `Next income: ${homeSnapshot.nextPay.name}` : 'Add income items to improve the forecast'
+  document.getElementById('heroMonthlyCushion').textContent = `${monthlyCushion >= 0 ? '+' : '-'}€${Math.abs(monthlyCushion).toFixed(0)}`
+  document.getElementById('heroMonthlyCushionNote').textContent = monthlyCushion >= 0 ? 'Income is ahead of regular outgoings' : 'Regular outgoings are higher than income'
+  document.getElementById('heroLowestPoint').textContent = `€${homeSnapshot.lowest.toFixed(0)}`
+  document.getElementById('heroLowestPointNote').textContent = homeSnapshot.lowest < 0 ? 'Your forecast dips below zero' : 'Your forecast stays above zero'
+
+  document.getElementById('metricIncome').textContent = `€${incomeTotal.toFixed(0)}`
+  document.getElementById('metricIncomeNote').textContent = `${incomes.length} income item${incomes.length === 1 ? '' : 's'}`
+  document.getElementById('metricOutgoing').textContent = `€${outgoingTotal.toFixed(0)}`
+  document.getElementById('metricOutgoingNote').textContent = `${outgoings.length} outgoing item${outgoings.length === 1 ? '' : 's'}`
+  document.getElementById('metricUpcoming').textContent = String(homeSnapshot.upcoming.filter(x => (x.date - now)/86400000 <= 7 && (x.date - now)/86400000 >= 0).length)
+  document.getElementById('metricUpcomingNote').textContent = homeSnapshot.nextBill ? `Next: ${homeSnapshot.nextBill.name}` : 'Nothing upcoming yet'
+
+  chart = drawBalanceChart('balanceChart')
+}
+
+function renderPlanDashboard(){
+  const incomes = items.filter(x => x.type === 'Income')
+  const outgoings = items.filter(x => x.type === 'Outgoing')
+  const incomeTotal = incomes.reduce((t,x) => t + monthlyValue(x), 0)
+  const outgoingTotal = outgoings.reduce((t,x) => t + monthlyValue(x), 0)
+
+  document.getElementById('incomeSummary').textContent = incomes.length ? `€${incomeTotal.toFixed(0)} per month from ${incomes.length} income item${incomes.length === 1 ? '' : 's'}` : 'No income items yet'
+  document.getElementById('outgoingSummary').textContent = outgoings.length ? `€${outgoingTotal.toFixed(0)} per month across ${outgoings.length} outgoing item${outgoings.length === 1 ? '' : 's'}` : 'No outgoing items yet'
+  document.getElementById('uploadSummary').textContent = recurringSuggestions.length ? `${recurringSuggestions.length} recurring suggestions ready to review` : detectedTransactions.length ? `${detectedTransactions.length} one-off transactions detected` : 'No document scanned yet'
+  document.getElementById('incomePreview').innerHTML = incomes.slice(0,3).map(x => `<div class="mini-row"><span>${x.name}</span><span>${x.freq}</span></div>`).join('') || '<div class="hint">Nothing added yet</div>'
+  document.getElementById('outgoingPreview').innerHTML = outgoings.slice(0,3).map(x => `<div class="mini-row"><span>${x.name}</span><span>${x.freq}</span></div>`).join('') || '<div class="hint">Nothing added yet</div>'
+
+  document.getElementById('planIncomeTotal').textContent = `€${incomeTotal.toFixed(0)}`
+  document.getElementById('planIncomeCount').textContent = incomes.length ? `${incomes.length} saved income item${incomes.length === 1 ? '' : 's'}` : 'No income items yet'
+  document.getElementById('planOutgoingTotal').textContent = `€${outgoingTotal.toFixed(0)}`
+  document.getElementById('planOutgoingCount').textContent = outgoings.length ? `${outgoings.length} saved outgoing item${outgoings.length === 1 ? '' : 's'}` : 'No outgoing items yet'
+  document.getElementById('planImportCount').textContent = String(recurringSuggestions.length || detectedTransactions.length || 0)
+  document.getElementById('planImportNote').textContent = recurringSuggestions.length ? `${recurringSuggestions.length} recurring suggestions waiting for review` : detectedTransactions.length ? `${detectedTransactions.length} imported transaction${detectedTransactions.length === 1 ? '' : 's'} detected` : 'No document scanned yet'
+}
+
+function openHomeModal(type){
+  const title = document.getElementById('homeModalTitle')
+  const content = document.getElementById('homeModalContent')
+  const now = new Date()
+  if(type === 'today'){
+    title.textContent = 'Today Status'
+    content.innerHTML = `<div class="insight"><div class="card-title">Today balance</div><div class="big">€${homeSnapshot.todayBal.toFixed(2)}</div></div><div class="insight">${homeSnapshot.todayBal >= 0 ? 'You are currently on track.' : 'You are currently under pressure.'}</div><div class="insight">${homeSnapshot.nextPay ? `${Math.ceil((homeSnapshot.nextPay.date - now)/86400000)} days until ${homeSnapshot.nextPay.name}.` : 'No future income detected yet.'}</div><div class="insight">${homeSnapshot.nextBill ? `Next bill: ${homeSnapshot.nextBill.name} on ${formatDateDisplay(homeSnapshot.nextBill.date)}.` : 'No future outgoing detected yet.'}</div>`
+  } else if(type === 'forecast'){
+    title.textContent = 'Forecast Balance'
+    content.innerHTML = `<div class="insight"><div class="card-title">Lowest point</div><div class="big">€${homeSnapshot.lowest.toFixed(2)}</div></div><div class="insight">${homeSnapshot.lowest < 0 ? 'Your forecast drops below zero at some point in the next 60 days.' : 'Your forecast stays above zero in the next 60 days.'}</div><div class="insight">Forecast stays positive for ${homeSnapshot.survivalEvents} forecast events.</div>`
+  } else if(type === 'graph'){
+    title.textContent = 'Balance Graph'
+    content.innerHTML = '<div style="height:320px"><canvas id="modalChart"></canvas></div>'
+    setTimeout(() => {
+      if(modalChart) modalChart.destroy()
+      modalChart = drawBalanceChart('modalChart')
+    }, 0)
+  } else if(type === 'upcoming'){
+    title.textContent = 'Upcoming Forecast'
+    content.innerHTML = `<div id="upcomingTabs"></div><div id="upcomingModalList"></div>`
+    setTimeout(renderUpcomingModal, 0)
+  }
+  document.getElementById('homeModal').classList.add('open')
+}
+
+function closeHomeModal(){
+  document.getElementById('homeModal').classList.remove('open')
+  if(modalChart){
+    modalChart.destroy()
+    modalChart = null
+  }
+}
+
+function setUpcomingRange(days){
+  upcomingRange = days
+  renderUpcomingModal()
+}
+
+function renderUpcomingModal(){
+  const listEl = document.getElementById('upcomingModalList')
+  const tabsEl = document.getElementById('upcomingTabs')
+  if(!listEl || !tabsEl) return
+
+  const ranges = [
+    { days: 7, label: '7 days' },
+    { days: 30, label: '30 days' },
+    { days: 60, label: '60 days' },
+    { days: 365, label: '12 months' }
+  ]
+
+  tabsEl.innerHTML = `<div class="range-tabs">${ranges.map(r => `<button class="range-tab ${upcomingRange === r.days ? 'active' : ''}" onclick="setUpcomingRange(${r.days})">${r.label}</button>`).join('')}</div>`
+
+  const now = new Date()
+  const filtered = upcomingForecastItems.filter(f => {
+    const diff = (f.date - now) / 86400000
+    return diff >= 0 && diff <= upcomingRange
+  })
+
+  listEl.innerHTML = filtered.length
+    ? filtered.map(f => `<div class="txn-card"><div><div style="font-weight:600">${f.name}</div><div class="hint">${formatDateDisplay(f.date)} • ${f.type}</div></div><div style="font-weight:700;color:${f.type === 'Income' ? '#1f8a4c' : '#d64545'}">${formatAmount(f.amount, f.type)}</div></div>`).join('')
+    : '<div class="hint">Nothing in this period</div>'
+}
+
+function normalizeMerchantName(name){
+  const original = String(name || '').toUpperCase().trim()
+  let n = original
+  n = n.replace(/^(POSC?|ATM)\s*/, '')
+  n = n.replace(/^\d{2}[A-Z]{3}\s*/, '')
+  if(/^[A-Z0-9]{10,}(\s+SP)?$/.test(n)) return original
+  n = n.replace(/\s+/g, ' ').trim()
+  return n || original
+}
+
+function detectCategory(name){
+  const n = normalizeMerchantName(name)
+  if(/SALARY|PAY|WAGE|REVOLUT|LODGEMENT|REFUND|TRANSFER FROM|RECEIVED|SP\b/.test(n)) return 'Income'
+  if(/MORTGAGE|RENT|SEPA|THREE|VIRGIN|SKY|EIR|VODAFONE|APPLE\.COM|NORDVPN/.test(n)) return 'Bills & Subscriptions'
+  if(/SUPERVALU|DUNNES|LIDL|ALDI|TESCO|CENTRA/.test(n)) return 'Groceries'
+  if(/CIRCLE K|MAXOL|APPLEGREEN|TOPAZ|SSTN|FUEL/.test(n)) return 'Fuel'
+  if(/DELIVEROO|JUST ?EAT|UBER ?EATS|MOLLOYS|PUB|CAFE|COFFEE|RESTAURANT/.test(n)) return 'Food & Drink'
+  if(/Q PARK|PARK|GETYOURGUIDE|SPORTS|SQUARE|CINEMA|TICKET|HOTEL|BOOKING/.test(n)) return 'Travel & Leisure'
+  if(/ATM|CASH/.test(String(name || '').toUpperCase())) return 'Cash'
+  return 'Other'
+}
+
+function inferFrequency(dates){
+  if(dates.length < 2) return null
+  const sorted = [...dates].sort((a,b) => a - b)
+  const gaps = []
+  for(let i = 1; i < sorted.length; i++) gaps.push(Math.round((sorted[i] - sorted[i-1]) / 86400000))
+  const avg = gaps.reduce((a,b) => a + b, 0) / gaps.length
+  if(avg >= 5 && avg <= 9) return 'Weekly'
+  if(avg >= 12 && avg <= 16) return 'Fortnightly'
+  if(avg >= 26 && avg <= 35) return 'Monthly'
+  return null
+}
+
+function parseCSV(text){
+  const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean)
+  return lines.map(l => {
+    const parts = l.split(',').map(x => x.trim())
+    if(parts.length < 4) return null
+    const date = new Date(parts[0] + 'T00:00:00')
+    const name = parts[1]
+    const amount = Number(String(parts[2]).replace('€','').trim())
+    const type = parts[3].toLowerCase().includes('income') ? 'Income' : 'Outgoing'
+    if(!name || Number.isNaN(date.getTime()) || Number.isNaN(amount)) return null
+    return { date, name, amount: Math.abs(amount), type }
+  }).filter(Boolean)
+}
+
+function parsePastedTransactions(text){
+  return parseCSV(text)
+}
+
+function extractTransactionsFromRawText(rawText){
+  const lines = String(rawText || '').split('\n').map(l => l.trim()).filter(Boolean)
+  const dateRegex = /^\d{2}\s+[A-Za-z]{3}\s+\d{4}$/
+  const amountRegex = /^\d+[.,]\d{2}$/
+  const ignoreExact = new Set(['BALANCE FORWARD','Bank of Ireland'])
+  const transactions = []
+  let currentDate = null
+
+  function parseDateLine(line){
+    const monthMap = {Jan:'01', Feb:'02', Mar:'03', Apr:'04', May:'05', Jun:'06', Jul:'07', Aug:'08', Sep:'09', Oct:'10', Nov:'11', Dec:'12'}
+    const m = line.match(/^(\d{2})\s+([A-Za-z]{3})\s+(\d{4})$/)
+    if(!m) return null
+    return `${m[3]}-${monthMap[m[2]]}-${m[1]}`
+  }
+
+  function classifyType(name){
+    return /salary|sent from revolut|lodgement|credit|refund|\bsp\b|transfer from|received/i.test(name) ? 'Income' : 'Outgoing'
+  }
+
+  for(let i = 0; i < lines.length; i++){
+    const line = lines[i]
+    if(dateRegex.test(line)){
+      currentDate = parseDateLine(line)
+      continue
+    }
+    if(!currentDate) continue
+    if(ignoreExact.has(line)) continue
+    if(/^Page\s+\d+/i.test(line)) continue
+    if(amountRegex.test(line)) continue
+
+    const description = line
+    const next = lines[i + 1]
+    const afterNext = lines[i + 2]
+
+    if(next && amountRegex.test(next)){
+      const amount = Number(next.replace(',', '.'))
+      const hasRunningBalanceAfter = afterNext && amountRegex.test(afterNext)
+      transactions.push({ date: new Date(currentDate + 'T00:00:00'), name: description, amount: Math.abs(amount), type: classifyType(description) })
+      i += hasRunningBalanceAfter ? 2 : 1
+    }
+  }
+  return transactions
+}
+
+function enrichTransactions(arr){
+  return arr.map(t => ({ ...t, cleanName: normalizeMerchantName(t.name), category: detectCategory(t.name) }))
+}
+
+function runCsvDetection(){
+  const input = document.getElementById('csvFile')
+  const status = document.getElementById('uploadStatus')
+  if(!input || !input.files || !input.files[0]){
+    if(status) status.textContent = 'Choose a CSV file first'
+    return
+  }
+  const reader = new FileReader()
+  reader.onload = function(e){
+    const parsed = enrichTransactions(parseCSV(e.target.result))
+    detectedTransactions = [...parsed]
+    renderDetectedTransactions()
+    detectRecurringFromImported(parsed)
+    renderUploadReview()
+    renderPlanDashboard()
+    if(status) status.textContent = parsed.length ? `Read ${parsed.length} transactions from CSV.` : 'No transactions found in CSV.'
+  }
+  reader.readAsText(input.files[0])
+}
+
+async function runPdfRecurringDetection(){
+  const input = document.getElementById('statementFile')
+  const status = document.getElementById('uploadStatus')
+  const pasteArea = document.getElementById('statementPaste')
+  if(!input || !input.files || !input.files[0]){
+    if(status) status.textContent = 'Choose a PDF first'
+    return
+  }
+  if(status) status.textContent = 'Reading PDF…'
+
+  try {
+    const file = input.files[0]
+    const buffer = await file.arrayBuffer()
+    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
+    let rawText = ''
+
+    for(let pageNum = 1; pageNum <= pdf.numPages; pageNum++){
+      const page = await pdf.getPage(pageNum)
+      const content = await page.getTextContent()
+      const pageLines = content.items.map(i => String(i.str || '').trim()).filter(Boolean)
+      rawText += pageLines.join('\n') + '\n'
+    }
+
+    if(pasteArea) pasteArea.value = rawText.trim()
+    const extracted = enrichTransactions(extractTransactionsFromRawText(rawText))
+    detectedTransactions = [...extracted]
+    renderDetectedTransactions()
+    detectRecurringFromImported(extracted)
+    renderUploadReview()
+    renderPlanDashboard()
+    if(status) status.textContent = extracted.length ? `Read ${extracted.length} transactions from PDF.` : 'No transactions found in PDF.'
+  } catch(err){
+    console.error(err)
+    if(status) status.textContent = 'Could not read that PDF.'
+  }
+}
+
+function detectRecurringFromImported(transactions){
+  const groups = {}
+  transactions.forEach(t => {
+    const cleanName = normalizeMerchantName(t.name)
+    const category = detectCategory(t.name)
+    const enriched = { ...t, cleanName, category }
+    const key = `${cleanName}|${t.type}|${t.amount.toFixed(2)}`
+    if(!groups[key]) groups[key] = []
+    groups[key].push(enriched)
+  })
+
+  recurringSuggestions = []
+  detectedTransactions = []
+
+  Object.keys(groups).forEach(key => {
+    const group = groups[key].sort((a,b) => a.date - b.date)
+    const freq = inferFrequency(group.map(g => g.date))
+    if(group.length >= 2 && freq){
+      recurringSuggestions.push({
+        name: group[0].cleanName,
+        originalName: group[0].name,
+        category: group[0].category,
+        type: group[0].type,
+        amount: group[0].amount,
+        freq,
+        count: group.length,
+        date: group[0].date.toISOString().slice(0,10),
+        selected: true
+      })
+    } else {
+      detectedTransactions.push(...group)
+    }
+  })
+}
+
+function loadDemoTransactions(){
+  const area = document.getElementById('statementPaste')
+  if(!area) return
+  area.value = [
+    '2026-01-29,TALLAGHT WEST SEPA DD,70,Outgoing',
+    '2026-02-05,TALLAGHT WEST SEPA DD,70,Outgoing',
+    '2026-02-12,TALLAGHT WEST SEPA DD,70,Outgoing',
+    '2026-02-19,TALLAGHT WEST SEPA DD,70,Outgoing',
+    '2026-02-04,Salary,547.25,Income',
+    '2026-02-11,Salary,547.25,Income',
+    '2026-02-18,Salary,547.25,Income',
+    '2026-02-25,Salary,547.25,Income',
+    '2026-02-21,VIRGIN MEDIA SEPA DD,59.99,Outgoing',
+    '2026-03-21,VIRGIN MEDIA SEPA DD,59.99,Outgoing',
+    '2026-02-25,Centra,5.00,Outgoing',
+    '2026-02-26,Garage Lunch,7.00,Outgoing'
+  ].join('\n')
+}
+
+function runRecurringDetection(){
+  const area = document.getElementById('statementPaste')
+  if(!area) return
+  const parsed = enrichTransactions(parsePastedTransactions(area.value))
+  detectedTransactions = [...parsed]
+  renderDetectedTransactions()
+  detectRecurringFromImported(parsed)
+  renderUploadReview()
+  renderPlanDashboard()
+}
+
+function renderDetectedTransactions(){
+  const el = document.getElementById('detectedPreview')
+  if(!el) return
+  if(!detectedTransactions.length){
+    el.innerHTML = '<div class="insight" style="margin:0"><div style="font-weight:700">Detected transactions</div><div class="hint" style="margin-top:8px">No transactions detected yet.</div></div>'
+    return
+  }
+  el.innerHTML = `<div class="insight" style="margin:0"><div style="font-weight:700">Detected transactions</div><div class="hint" style="margin:8px 0 12px">Preview of transactions found before recurring grouping. Original bank text stays visible so transactions are easy to recognise.</div>${detectedTransactions.slice(0,20).map(t => `<div class="txn-card"><div><div style="font-weight:700">${t.name}</div>${t.cleanName && t.cleanName !== t.name ? `<div class="hint"><strong>Recognised as:</strong> ${t.cleanName}</div>` : ''}<div class="hint">${formatDateDisplay(t.date)} • ${t.type}${t.category ? ` • ${t.category}` : ''}</div></div><div style="font-weight:700;color:${t.type === 'Income' ? '#1f8a4c' : '#d64545'}">${formatAmount(t.amount, t.type)}</div></div>`).join('')}${detectedTransactions.length > 20 ? `<div class="hint" style="margin-top:10px">Showing first 20 of ${detectedTransactions.length} detected transactions.</div>` : ''}</div>`
+}
+
+function toggleSuggestion(index){
+  recurringSuggestions[index].selected = !recurringSuggestions[index].selected
+  renderUploadReview()
+}
+
+function addSelectedSuggestions(){
+  recurringSuggestions.filter(s => s.selected).forEach(s => {
+    items.push({ name:s.name, type:s.type, amount:s.amount, freq:s.freq, date:s.date })
+  })
+  recurringSuggestions = recurringSuggestions.filter(s => !s.selected)
+  save()
+  renderHomeDashboard()
+  renderPlanDashboard()
+  renderUploadReview()
+}
+
+function archiveDetected(index){
+  archivedTransactions.push(detectedTransactions[index])
+  detectedTransactions.splice(index, 1)
+  renderUploadReview()
+}
+
+function renderUploadReview(){
+  const box = document.getElementById('uploadReview')
+  if(!box) return
+  box.innerHTML = `<div class="insight" style="margin:0"><div style="font-weight:700">Recurring suggestions</div><div class="hint" style="margin:8px 0 12px">Review what PayPlan thinks is weekly, fortnightly or monthly. Nothing is added unless you confirm it.</div>${recurringSuggestions.length ? recurringSuggestions.map((s,i) => `<div class="suggestion-item"><div><div style="font-weight:700">${s.originalName || s.name}</div>${s.name && s.originalName && s.name !== s.originalName ? `<div class="hint"><strong>Grouped as:</strong> ${s.name}</div>` : ''}<div class="hint">${s.freq} • ${s.count} matches • ${s.category || 'Other'} • from ${s.date}</div></div><div style="text-align:right"><div class="badge ${s.type === 'Income' ? 'income' : 'outgoing'}">${s.type}</div><div style="font-weight:700;margin-top:6px">€${s.amount.toFixed(2)}</div><button class="secondary" style="margin-top:8px" onclick="toggleSuggestion(${i})">${s.selected ? 'Selected' : 'Select'}</button></div></div>`).join('') : '<div class="hint">No recurring suggestions yet.</div>'}${recurringSuggestions.length ? '<button class="primary" style="margin-top:10px" onclick="addSelectedSuggestions()">Add selected</button>' : ''}</div><div class="insight"><div style="font-weight:700">Other transactions</div><div class="hint" style="margin:8px 0 12px">These stay as single transactions for now. You can archive them to keep this list tidy.</div>${detectedTransactions.length ? detectedTransactions.slice(0,12).map((t,i) => `<div class="plan-item"><div><div style="font-weight:700">${t.name}</div>${t.cleanName && t.cleanName !== t.name ? `<div class="hint"><strong>Recognised as:</strong> ${t.cleanName}</div>` : ''}<div class="hint">${formatDateDisplay(t.date)} • ${t.type}${t.category ? ` • ${t.category}` : ''}</div></div><div style="text-align:right"><div style="font-weight:700">€${t.amount.toFixed(2)}</div><button class="secondary" style="margin-top:8px" onclick="archiveDetected(${i})">Archive</button></div></div>`).join('') : '<div class="hint">No one-off transactions detected.</div>'}${archivedTransactions.length ? `<div class="hint" style="margin-top:10px">${archivedTransactions.length} archived</div>` : ''}</div>`
+}
+
+function openPlanModal(type){
+  const title = document.getElementById('planModalTitle')
+  const content = document.getElementById('planModalContent')
+  const incomes = items.filter(x => x.type === 'Income')
+  const outgoings = items.filter(x => x.type === 'Outgoing')
+
+  if(type === 'manual'){
+    title.textContent = 'Manual Input'
+    content.innerHTML = `<div class="grid-plan" style="grid-template-columns:1.1fr .9fr;gap:16px"><div class="insight" style="margin:0"><div style="font-weight:700;margin-bottom:12px">Add new item</div><input id="modalName" placeholder="Name"><select id="modalType"><option>Outgoing</option><option>Income</option></select><input id="modalAmount" type="number" placeholder="Amount"><select id="modalFreq"><option>Monthly</option><option>Fortnightly</option><option>Weekly</option></select><input id="modalDate" type="date"><button class="primary" onclick="addItemFromModal()">Add</button></div><div><div class="insight" style="margin:0"><div style="font-weight:700">Quick help</div><div class="hint" style="margin-top:8px">Use this to add salary, mortgage, rent, subscriptions, phone bills and anything else you already know.</div><div class="hint" style="margin-top:10px">This is the fastest way to build your starting plan before statement import is added.</div></div></div></div>`
+  } else if(type === 'upload'){
+    title.textContent = 'Upload Statement'
+    content.innerHTML = `<div class="grid-plan" style="grid-template-columns:1fr;gap:16px"><div class="insight" style="margin:0"><div style="font-weight:700;margin-bottom:10px">Recurring transaction detection</div><div class="hint">Upload a bank statement or paste transactions manually. Manual format: <strong>YYYY-MM-DD, Name, Amount, Type</strong>.<br><br>🔒 Your data stays private — everything is processed in your browser. Nothing is uploaded or stored.</div><input id="statementFile" class="file-input" type="file" accept="application/pdf"><input id="csvFile" class="file-input" type="file" accept=".csv"><div id="uploadStatus" class="hint" style="margin-top:4px"></div><textarea id="statementPaste" placeholder="2026-03-01, Salary, 547.25, Income&#10;2026-03-05, Mortgage, 1107.42, Outgoing" style="min-height:150px;margin:12px 0"></textarea><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="secondary" onclick="loadDemoTransactions()">Load demo</button><button class="secondary" onclick="runPdfRecurringDetection()">Detect from PDF</button><button class="secondary" onclick="runCsvDetection()">Detect from CSV</button><button class="primary" style="width:auto;padding:12px 18px" onclick="runRecurringDetection()">Detect from pasted list</button></div></div><div id="detectedPreview"></div><div id="uploadReview"></div></div>`
+    setTimeout(() => {
+      renderDetectedTransactions()
+      renderUploadReview()
+    }, 0)
+  } else if(type === 'income'){
+    const total = incomes.reduce((t,x) => t + monthlyValue(x), 0)
+    title.textContent = 'Income'
+    content.innerHTML = `<div class="grid-plan" style="grid-template-columns:.9fr 1.1fr;gap:16px"><div><div class="insight" style="margin:0"><div class="card-title">Monthly income</div><div class="big">€${total.toFixed(0)}</div><div class="stat">${incomes.length} income items saved</div></div><div class="insight"><div class="card-title">Types</div><div class="mini-row"><span>Weekly</span><span>${incomes.filter(x=>x.freq==='Weekly').length}</span></div><div class="mini-row"><span>Fortnightly</span><span>${incomes.filter(x=>x.freq==='Fortnightly').length}</span></div><div class="mini-row"><span>Monthly</span><span>${incomes.filter(x=>x.freq==='Monthly').length}</span></div></div></div><div><div class="card-title" style="margin-bottom:12px">Saved income</div>${incomes.length ? incomes.map(x => `<div class="plan-item" onclick="closePlanModal();openEdit(${items.indexOf(x)})"><div><div style="font-weight:600">${x.name}</div><div class="hint">${x.freq} • ${x.date}</div></div><div>€${x.amount}</div></div>`).join('') : '<div class="hint">No income items yet</div>'}</div></div>`
+  } else if(type === 'outgoing'){
+    const total = outgoings.reduce((t,x) => t + monthlyValue(x), 0)
+    title.textContent = 'Outgoings'
+    content.innerHTML = `<div class="grid-plan" style="grid-template-columns:.9fr 1.1fr;gap:16px"><div><div class="insight" style="margin:0"><div class="card-title">Monthly outgoings</div><div class="big">€${total.toFixed(0)}</div><div class="stat">${outgoings.length} outgoing items saved</div></div><div class="insight"><div class="card-title">Simple groups</div><div class="mini-row"><span>Housing / Bills</span><span>${outgoings.filter(x => /mortgage|rent|bill|sepa dd/i.test(x.name)).length}</span></div><div class="mini-row"><span>Utilities</span><span>${outgoings.filter(x => /electric|gas|virgin|sky|phone|eir|vodafone|apple|nordvpn/i.test(x.name)).length}</span></div><div class="mini-row"><span>Other</span><span>${outgoings.filter(x => !/mortgage|rent|bill|sepa dd|electric|gas|virgin|sky|phone|eir|vodafone|apple|nordvpn/i.test(x.name)).length}</span></div></div></div><div><div class="card-title" style="margin-bottom:12px">Saved outgoings</div>${outgoings.length ? outgoings.map(x => `<div class="plan-item" onclick="closePlanModal();openEdit(${items.indexOf(x)})"><div><div style="font-weight:600">${x.name}</div><div class="hint">${x.freq} • ${x.date}</div></div><div>€${x.amount}</div></div>`).join('') : '<div class="hint">No outgoing items yet</div>'}</div></div>`
+  }
+
+  document.getElementById('planModal').classList.add('open')
+}
+
+function closePlanModal(){
+  document.getElementById('planModal').classList.remove('open')
+}
+
+document.getElementById('startBal').value = startBalance || ''
+renderHomeDashboard()
+renderPlanDashboard()
+
+document.addEventListener('click', function(e){
+  if(e.target.id === 'homeModal') closeHomeModal()
+  if(e.target.id === 'planModal') closePlanModal()
+  if(e.target.id === 'editModal') document.getElementById('editModal').classList.remove('open')
+})
+</script>
+</body>
+</html>
